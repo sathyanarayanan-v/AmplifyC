@@ -1,3 +1,6 @@
 [submodule "API"]
 	path = API
 	url = git@github.com:sathyanarayanan-v/AmplifyC-API.git
+[submodule "client"]
+	path = client
+	url = git@github.com:sathyanarayanan-v/AmplifyC-Client.git
