@@ -1,18 +1,23 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IO;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using API.Data;
+using API.Interfaces;
+using API.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Security;
 
 namespace API
 {
@@ -33,10 +38,25 @@ namespace API
             {
                 options.UseSqlite(_config.GetConnectionString("DefaultConnection"));
             });
+            services.AddScoped<ITokenService, TokenService>();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
+            });
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = GetIssuerSigningKey(),
+                    ValidateLifetime = true,
+                    ValidateAudience = true,
+                    ValidateIssuer = true,
+                    ValidAudience = Convert.ToBase64String(Encoding.UTF8.GetBytes("AmplifyC Client")).ToString(),
+                    ValidIssuer = Convert.ToBase64String(Encoding.UTF8.GetBytes("AmplifyC Authentication API")).ToString()
+                };
             });
         }
 
@@ -54,6 +74,8 @@ namespace API
 
             app.UseRouting();
 
+            app.UseAuthentication();
+
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
@@ -61,5 +83,36 @@ namespace API
                 endpoints.MapControllers();
             });
         }
+
+
+        // public static string DecodeToken(string token, string publicRsaKey)
+        // {
+        //     RSAParameters rsaParams;
+
+        //     using (var tr = new StringReader(publicRsaKey))
+        //     {
+        //         var pemReader = new PemReader(tr);
+        //         var publicKeyParams = pemReader.ReadObject() as RsaKeyParameters;
+        //         if (publicKeyParams == null)
+        //         {
+        //             throw new Exception("Could not read RSA public key");
+        //         }
+        //         rsaParams = DotNetUtilities.ToRSAParameters(publicKeyParams);
+        //     }
+        //     using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+        //     {
+        //         rsa.ImportParameters(rsaParams);
+        //         // This will throw if the signature is invalid
+        //         return Jose.JWT.Decode(token, rsa, Jose.JwsAlgorithm.RS256);
+        //     }
+        // }
+
+        private X509SecurityKey GetIssuerSigningKey()
+        {
+            var publicCert = new X509Certificate2("jwt_rsa_pub.cer");
+            Console.WriteLine(publicCert);
+            return new X509SecurityKey(publicCert);
+        }
+
     }
 }

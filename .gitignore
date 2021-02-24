@@ -281,3 +281,6 @@ __pycache__/
 *.cer
 *.key
 *.db
+*.pem
+*.pub
+jwt_rsa

@@ -7,21 +7,24 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using System;
+using API.Interfaces;
 
 namespace API.Controllers
 {
     public class AccountController : BaseController
     {
         private readonly DataContext _context;
-        public AccountController(DataContext context)
+        private readonly ITokenService _tokenService;
+        public AccountController(DataContext context, ITokenService tokenService)
         {
+            _tokenService = tokenService;
             _context = context;
 
         }
 
 
         [HttpPost("register")]
-        public async Task<ActionResult<AppUser>> Register(AccountRegisterDto registerDto)
+        public async Task<ActionResult<LoginResponseDto>> Register(AccountRegisterDto registerDto)
         {
             using var hmac = new HMACSHA512();
 
@@ -38,7 +41,12 @@ namespace API.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return user;
+            var token = _tokenService.signToken(user);
+            return new LoginResponseDto
+            {
+                username = user.UserName,
+                token = token
+            };
         }
 
         [HttpPost("login")]
@@ -56,10 +64,11 @@ namespace API.Controllers
                 if (computedHash[i] != user.PasswordHash[i]) return Unauthorized("Invalid password");
             }
 
+            var token = _tokenService.signToken(user);
             return new LoginResponseDto
             {
                 username = user.UserName,
-                token = "hello"
+                token = token
             };
 
         }
