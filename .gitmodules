@@ -1,12 +1,6 @@
 [submodule "API"]
 	path = API
 	url = git@github.com:sathyanarayanan-v/AmplifyC-API.git
-[submodule "client"]
-	path = client
-	url = git@github.com:sathyanarayanan-v/AmplifyC-Client.git
-[submodule "/Users/akash/Documents/projects/AmplifyC/API"]
-	path = /Users/akash/Documents/projects/AmplifyC/API
-	url = git@github.com:sathyanarayanan-v/AmplifyC-API.git
-[submodule "/Users/akash/Documents/projects/AmplifyC/Client"]
-	path = /Users/akash/Documents/projects/AmplifyC/Client
+[submodule "Client"]
+	path = Client
 	url = git@github.com:sathyanarayanan-v/AmplifyC-Client.git
